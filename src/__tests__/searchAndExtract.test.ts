@@ -24,16 +24,16 @@ const documentContentOne = `
   export default Ember._setComponentTemplate(template, MyInputComponent);
 `;
 const expectedResultOne = `
-                                                    
-               
-                                                         
 
-                       
+
+
+
+
     <div class="input {{this.type}}">
       <label>{{yield}}</label>
       <input type={{this.type}} value={{this.value}}>
     </div>
-   `;
+`;
 const tagOne = 'hbs';
 
 test('with one tagged template literals', () => {
@@ -53,7 +53,7 @@ const documentContentTwo = `
   \`;
 
   const myButtonTemplate = handlebars\`<button type="button">{{yield}}</button>\`;
-
+  const myYieledTemplate = hbs\`{{yield}}\`;
   interface IComponentArgs {
     type: string;
     value?: any;
@@ -61,34 +61,34 @@ const documentContentTwo = `
 
   class MyInputComponent extends GlimmerComponent<IComponentArgs> {
     type: string = 'text';
-    layout = dotted.string\`This is just an example with **dotted.string** as a tag name and **escaped backtick** char \\\` inside the literal template \`;
+    layout = dotted.string\`This is just an example with **dotted.string** as a tag name and **escaped backtick** char \\\` inside the literal template\`;
   };
 
   // @ts-ignore
   export default Ember._setComponentTemplate(template, MyInputComponent);
 `;
 const expectedResultTwo = `
-                                                    
-               
-                                                         
 
-                       
+
+
+
+
     <div class="input {{this.type}}">
       <label>{{yield}}</label>
       <input type={{this.type}} value={{this.value}}>
     </div>
-    
 
-                                      <button type="button">{{yield}}</button>  
 
-                            
-                 
-                
-   
+                                      <button type="button">{{yield}}</button>
+                               {{yield}}
 
-                                                                   
-                          
-                           This is just an example with **dotted.string** as a tag name and **escaped backtick** char \\\` inside the literal template  `;
+
+
+
+
+
+
+                           This is just an example with **dotted.string** as a tag name and **escaped backtick** char \\\` inside the literal template`;
 const tagTwo = 'hbs|handlebars|dotted.string';
 
 test('with more than one tagged template literals and `hbs`, `handlebars`, `dotted.string` as a tag name', () => {

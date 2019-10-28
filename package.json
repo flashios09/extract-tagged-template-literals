@@ -1,6 +1,6 @@
 {
   "name": "extract-tagged-template-literals",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Search and extract tagged template literals from javascript/typescript file.",
   "keywords": [
     "tagged template literals",
@@ -22,10 +22,11 @@
     "prepublishOnly": "yarn test && yarn lint",
     "preversion": "yarn lint",
     "version": "yarn format && git add -A src",
-    "postversion" : "git push && git push --tags"
+    "postversion": "git push && git push --tags"
   },
   "devDependencies": {
     "@types/jest": "^24.0.18",
+    "@types/node": "^12.11.7",
     "jest": "^24.9.0",
     "prettier": "^1.18.2",
     "ts-jest": "^24.0.2",

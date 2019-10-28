@@ -58,6 +58,8 @@ export function searchAndExtract(documentContent: string, tag: string): string |
 
   const regex = new RegExp("([\\s\\S]*?(?:" + tag + ")`)([\\s\\S]*?)((?<=[^\\\\])`)", "gm");
   let m;
+  let beforeTpl: string;
+  let theTpl: string;
   let inlineTemplate = "";
   while ((m = regex.exec(documentContent)) !== null) {
     // This is necessary to avoid infinite loops with zero-width matches
@@ -69,19 +71,30 @@ export function searchAndExtract(documentContent: string, tag: string): string |
     m.forEach((match, groupIndex) => {
       // the **before** part `([\s\S]*?hbs`)` from anything to *hbs`*
       if (groupIndex === 1) {
-        // replace **only** the space character(s) or the non-space charater(s)
-        // don't touch the `\n`, `\t`, `r`, `\f`, `v`, we need them to have the correct indentation
-        inlineTemplate += match.replace(/[ ]|\S/gm, " ");
+        // for now, we have to replace **only** the non-space charater(s)
+        // after we will have a trimmed version of **beforeTpl**
+        beforeTpl = match.replace(/\S/gm, " ");
       }
 
       // the **template** part `([\s\S]*?)`
       if (groupIndex === 2) {
-        inlineTemplate += match;
+        theTpl = match;
       }
 
       // the **backtick** `(`)` at the end of the template
       if (groupIndex === 3) {
-        inlineTemplate += match.replace("`", " ");
+        // if **theTpl** starts on new line then remove **all** the whitespaces in the beforeTpl
+        // else remove the whitespaces but leave the ones at the end:
+        // -> we need the right whitespaces to have the correct indentation
+        beforeTpl = (theTpl.match(/^\n/)) ? beforeTpl.replace(/[ ]/gm, '') : beforeTpl.replace(/[ ]*(?=\n+)/gm, '');
+        
+        // if **theTpl** ends with a new line + whitespaces, we have to remove the whitespaces 
+        // -> **right trim**
+        if (theTpl.match(/\n[ ]+$/)) {
+          theTpl = theTpl.replace(/(?!\n)[ ]+$/gm, '');
+        }
+        
+        inlineTemplate += beforeTpl + theTpl;
       }
     });
   }
