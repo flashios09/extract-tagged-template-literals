@@ -1,6 +1,6 @@
 {
   "name": "extract-tagged-template-literals",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Search and extract tagged template literals from javascript/typescript file.",
   "keywords": [
     "tagged template literals",
