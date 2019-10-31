@@ -56,11 +56,11 @@ export function searchAndExtract(documentContent: string, tag: string): string |
     throw new Error(`Invalid passed tag \`${tag}\`, see the \`searchAndExtract\` documentation for valid format !`);
   }
 
-  const regex = new RegExp("([\\s\\S]*?(?:" + tag + ")`)([\\s\\S]*?)((?<=[^\\\\])`)", "gm");
+  const regex = new RegExp("([\\s\\S]*?(?:" + tag + ")`)([\\s\\S]*?[^\\\\])(?:`)", "gm");
   let m;
-  let beforeTpl: string;
-  let theTpl: string;
-  let inlineTemplate = "";
+  let beforeTpl: string = "";
+  let theTpl: string = "";
+  let inlineTemplates: string = "";
   while ((m = regex.exec(documentContent)) !== null) {
     // This is necessary to avoid infinite loops with zero-width matches
     if (m.index === regex.lastIndex) {
@@ -71,35 +71,21 @@ export function searchAndExtract(documentContent: string, tag: string): string |
     m.forEach((match, groupIndex) => {
       // the **before** part `([\s\S]*?hbs`)` from anything to *hbs`*
       if (groupIndex === 1) {
-        // for now, we have to replace **only** the non-space charater(s)
-        // after we will have a trimmed version of **beforeTpl**
-        beforeTpl = match.replace(/\S/gm, " ");
+        // we need **theTpl** to know how to trim the **beforeTpl** part.
+        beforeTpl = match;
       }
 
-      // the **template** part `([\s\S]*?)`
+      // the **template** part `([\s\S]*?[^\\])`
       if (groupIndex === 2) {
-        theTpl = match;
-      }
-
-      // the **backtick** `(`)` at the end of the template
-      if (groupIndex === 3) {
-        // if **theTpl** starts on new line then remove **all** the whitespaces in the beforeTpl
-        // else remove the whitespaces but leave the ones at the end:
-        // -> we need the right whitespaces to have the correct indentation
-        beforeTpl = (theTpl.match(/^\n/)) ? beforeTpl.replace(/[ ]/gm, '') : beforeTpl.replace(/[ ]*(?=\n+)/gm, '');
-        
-        // if **theTpl** ends with a new line + whitespaces, we have to remove the whitespaces 
-        // -> **right trim**
-        if (theTpl.match(/\n[ ]+$/)) {
-          theTpl = theTpl.replace(/(?!\n)[ ]+$/gm, '');
-        }
-        
-        inlineTemplate += beforeTpl + theTpl;
+        beforeTpl = _trimBeforeTpl(beforeTpl, match); 
+        theTpl = _trimTheTpl(match);
+      
+        inlineTemplates += beforeTpl + theTpl;
       }
     });
   }
 
-  return inlineTemplate;
+  return inlineTemplates;
 }
 
 /**
@@ -110,4 +96,43 @@ export function searchAndExtract(documentContent: string, tag: string): string |
  */
 export function searchAndExtractHbs(documentContent: string): string {
   return searchAndExtract(documentContent, 'hbs|handlebars');
+}
+
+/**
+ * Trim the **beforeTpl** part **([\s\S]*?hbs`)** from anything to **hbs`**.
+ * 
+ * First we need to replace the non-whitespace characters `\S` with a space `" "` then we check the template itself:
+ * - If **theTpl** starts on new line then remove **all** the whitespaces in the **beforeTpl**.
+ * - Else remove the whitespaces **but leave the ones at the end**, we need the to have the correct **indentation**.
+ *
+ * @param {string} beforeTpl The before template part **([\s\S]*?hbs`)** from anything to **hbs`**.
+ * @param {string} theTpl The **raw** template itself.
+ * @returns {string} The trimmed **beforeTpl**, without the non-space caracters and without the trailing spaces.
+ */
+function _trimBeforeTpl(beforeTpl: string, theTpl: string): string {
+  const beforeTplWhitespaced = beforeTpl.replace(/\S/gm, " ");
+  const beforeTplTrimmed = (theTpl.match(/^\n/)) ? 
+    beforeTplWhitespaced.replace(/[ ]/gm, '') : 
+    beforeTplWhitespaced.replace(/[ ]*(?=\n+)/gm, '');
+
+  return beforeTplTrimmed;
+}
+
+/**
+ * Trim **theTpl** part `([\s\S]*?[^\\])`.
+ * 
+ * Check if **theTpl** ends with a new line + trailing whitespaces, then we have to remove the trailing whitespaces 
+ * on the last(new)line(**right trim**) to avoid `trainling-spaces` template lint error.
+ *
+ * @param {string} theTpl The **raw** template.
+ * @returns {string} The trimmed **tpl**
+ */
+function _trimTheTpl(theTpl: string): string {
+  if (theTpl.match(/\n[ ]+$/)) {
+    const theTplTrimmed = theTpl.replace(/(?!\n)[ ]+$/gm, '');
+    
+    return theTplTrimmed;
+  }
+  
+  return theTpl;
 }
